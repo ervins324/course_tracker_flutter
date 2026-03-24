@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiConstants {
   static const String baseUrl = 'https://www.googleapis.com/youtube/v3';
-  static String apiKey = 'AIzaSyACav8jtWn8zj8rhmpvA6vuZvM70utsXXk';
+  static String apiKey = '';
 
   static const String _apiKeyPrefKey = 'google_api_key';
 
