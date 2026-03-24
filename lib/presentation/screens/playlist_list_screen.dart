@@ -115,8 +115,8 @@ class PlaylistListScreen extends ConsumerWidget {
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
-            labelText: 'YouTube Playlist ID',
-            hintText: 'PLxxxxxxxxxxxxxx',
+            labelText: 'YouTube Playlist ID or URL',
+            hintText: 'PL... or https://youtube.com/playlist?list=PL...',
           ),
         ),
         actions: [
@@ -127,11 +127,22 @@ class PlaylistListScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               if (controller.text.isNotEmpty) {
+                final input = controller.text.trim();
+                String playlistId = input;
+                
+                // Try to extract ID if it's a URL
+                if (input.contains('youtube.com') || input.contains('youtu.be')) {
+                  final uri = Uri.tryParse(input);
+                  if (uri != null && uri.queryParameters.containsKey('list')) {
+                    playlistId = uri.queryParameters['list']!;
+                  }
+                }
+
                 Navigator.pop(context);
                 try {
                   await ref
                       .read(playlistListProvider.notifier)
-                      .importPlaylist(controller.text.trim());
+                      .importPlaylist(playlistId);
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

@@ -28,7 +28,7 @@ class VideoListScreen extends ConsumerWidget {
             tooltip: 'View Progress',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ProgressScreen()),
+              MaterialPageRoute(builder: (_) => ProgressScreen(playlistId: playlistId)),
             ),
           ),
         ],

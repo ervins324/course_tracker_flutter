@@ -5,11 +5,13 @@ import '../providers/course_providers.dart';
 import '../widgets/progress_card.dart';
 
 class ProgressScreen extends ConsumerWidget {
-  const ProgressScreen({super.key});
+  final String playlistId;
+
+  const ProgressScreen({super.key, required this.playlistId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final progressAsync = ref.watch(courseProgressProvider);
+    final progressAsync = ref.watch(playlistProgressProvider(playlistId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
