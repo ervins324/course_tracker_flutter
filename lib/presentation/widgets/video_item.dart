@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/video.dart';
 import '../../core/utils/duration_parser.dart';
 import '../providers/course_providers.dart';
@@ -60,19 +61,39 @@ class VideoItem extends ConsumerWidget {
       child: ListTile(
         onTap: () => _openInYouTube(video.videoId),
         leading: video.thumbnailUrl.isNotEmpty
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.network(
-                  video.thumbnailUrl,
+            ? CachedNetworkImage(
+                imageUrl: video.thumbnailUrl,
+                width: 80,
+                height: 45,
+                memCacheWidth: 240,
+                memCacheHeight: 135,
+                imageBuilder: (context, imageProvider) => Container(
                   width: 80,
                   height: 45,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 80,
-                    height: 45,
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: const Icon(Icons.play_circle_outline, size: 28),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.cover,
+                    ),
                   ),
+                ),
+                placeholder: (context, url) => Container(
+                  width: 80,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  width: 80,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.play_circle_outline, size: 28),
                 ),
               )
             : Container(
