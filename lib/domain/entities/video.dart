@@ -3,12 +3,14 @@ class Video {
   final String title;
   final Duration duration;
   final bool isWatched;
+  final String thumbnailUrl;
 
   Video({
     required this.videoId,
     required this.title,
     required this.duration,
     this.isWatched = false,
+    this.thumbnailUrl = '',
   });
 
   Video copyWith({bool? isWatched}) {
@@ -17,6 +19,7 @@ class Video {
       title: title,
       duration: duration,
       isWatched: isWatched ?? this.isWatched,
+      thumbnailUrl: thumbnailUrl,
     );
   }
 }

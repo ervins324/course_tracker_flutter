@@ -6,21 +6,23 @@ import '../widgets/video_item.dart';
 import 'progress_screen.dart';
 
 class VideoListScreen extends ConsumerWidget {
-  const VideoListScreen({super.key});
+  final String playlistId;
+  final String playlistTitle;
+
+  const VideoListScreen({
+    super.key,
+    required this.playlistId,
+    this.playlistTitle = '',
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final progressAsync = ref.watch(courseProgressProvider);
+    final progressAsync = ref.watch(playlistProgressProvider(playlistId));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Course Videos'),
+        title: Text(playlistTitle.isNotEmpty ? playlistTitle : 'Course Videos'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.playlist_add),
-            tooltip: 'Import Playlist',
-            onPressed: () => _showImportDialog(context, ref),
-          ),
           IconButton(
             icon: const Icon(Icons.bar_chart),
             tooltip: 'View Progress',
@@ -33,68 +35,82 @@ class VideoListScreen extends ConsumerWidget {
       ),
       body: progressAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (progress) {
-          if (progress == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.playlist_add, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text('No playlist loaded'),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => _showImportDialog(context, ref),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Import Playlist'),
-                  ),
-                ],
-              ),
-            );
-          }
-          return ListView.builder(
-            itemCount: progress.videos.length,
-            itemBuilder: (context, index) {
-              return VideoItem(video: progress.videos[index]);
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  void _showImportDialog(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Import Playlist'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'YouTube Playlist ID',
-            hintText: 'PLxxxxxxxxxxxxxx',
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: $e',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => ref
+                      .read(playlistProgressProvider(playlistId).notifier)
+                      .refreshPlaylist(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (controller.text.isNotEmpty) {
-                Navigator.pop(context);
-                await ref
-                    .read(courseProgressProvider.notifier)
-                    .fetchPlaylist(controller.text);
-              }
-            },
-            child: const Text('Import'),
-          ),
-        ],
+        data: (progress) {
+          if (progress == null) {
+            return const Center(child: Text('No videos found'));
+          }
+          return Column(
+            children: [
+              // Progress bar at top
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: progress.progressPercentage / 100,
+                          minHeight: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${progress.watchedVideos}/${progress.totalVideos}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              // Video list with pull-to-refresh
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => ref
+                      .read(playlistProgressProvider(playlistId).notifier)
+                      .refreshPlaylist(),
+                  child: ListView.builder(
+                    itemCount: progress.videos.length,
+                    itemBuilder: (context, index) {
+                      return VideoItem(
+                        video: progress.videos[index],
+                        playlistId: playlistId,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

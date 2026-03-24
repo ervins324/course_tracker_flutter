@@ -2,9 +2,14 @@ import 'video.dart';
 
 class CourseProgress {
   final String playlistId;
+  final String playlistTitle;
   final List<Video> videos;
 
-  CourseProgress({required this.playlistId, required this.videos});
+  CourseProgress({
+    required this.playlistId,
+    this.playlistTitle = '',
+    required this.videos,
+  });
 
   int get totalVideos => videos.length;
   int get watchedVideos => videos.where((v) => v.isWatched).length;

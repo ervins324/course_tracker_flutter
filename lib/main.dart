@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'data/models/video_model.dart';
 import 'core/services/notification_service.dart';
+import 'core/constants/api_constants.dart';
 import 'app.dart';
 
 void main() async {
@@ -15,6 +16,9 @@ void main() async {
     await Hive.initFlutter();
     Hive.registerAdapter(VideoModelAdapter());
   }
+
+  // Load persisted API key
+  await ApiConstants.loadApiKey();
 
   // Initialize notifications (Android/iOS only)
   if (!kIsWeb) {

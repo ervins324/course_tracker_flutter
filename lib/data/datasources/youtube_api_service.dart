@@ -2,15 +2,25 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/video_model.dart';
+import '../../core/constants/api_constants.dart';
+
+class PlaylistFetchResult {
+  final String playlistTitle;
+  final List<VideoModel> videos;
+
+  PlaylistFetchResult({required this.playlistTitle, required this.videos});
+}
 
 class YouTubeApiService {
-  final String apiKey;
   final http.Client client;
 
-  YouTubeApiService({required this.apiKey, required this.client});
+  YouTubeApiService({required this.client});
 
-  Future<List<VideoModel>> fetchPlaylistVideos(String playlistId) async {
+  Future<PlaylistFetchResult> fetchPlaylistVideos(String playlistId) async {
     try {
+      // Fetch playlist title
+      final playlistTitle = await _fetchPlaylistTitle(playlistId);
+
       final videos = <VideoModel>[];
       String? nextPageToken;
       int positionOffset = 0;
@@ -21,7 +31,7 @@ class YouTubeApiService {
                 '?part=snippet,contentDetails'
                 '&playlistId=$playlistId'
                 '&maxResults=50'
-                '&key=$apiKey'
+                '&key=${ApiConstants.apiKey}'
                 '${nextPageToken != null ? '&pageToken=$nextPageToken' : ''}');
 
         final response = await client.get(url);
@@ -62,10 +72,27 @@ class YouTubeApiService {
 
       // Sort by position to ensure correct order
       videos.sort((a, b) => a.position.compareTo(b.position));
-      return videos;
+      return PlaylistFetchResult(playlistTitle: playlistTitle, videos: videos);
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<String> _fetchPlaylistTitle(String playlistId) async {
+    final url = Uri.parse('https://www.googleapis.com/youtube/v3/playlists'
+        '?part=snippet'
+        '&id=$playlistId'
+        '&key=${ApiConstants.apiKey}');
+
+    final response = await client.get(url);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final items = data['items'] as List?;
+      if (items != null && items.isNotEmpty) {
+        return items[0]['snippet']['title'] as String;
+      }
+    }
+    return playlistId; // Fallback to ID if title can't be fetched
   }
 
   Future<List<VideoModel>> _fetchVideoDetails(
@@ -73,7 +100,7 @@ class YouTubeApiService {
     final url = Uri.parse('https://www.googleapis.com/youtube/v3/videos'
         '?part=snippet,contentDetails'
         '&id=$videoIds'
-        '&key=$apiKey');
+        '&key=${ApiConstants.apiKey}');
 
     final response = await client.get(url);
     if (response.statusCode != 200) {
