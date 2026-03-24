@@ -4,7 +4,7 @@
 
 An open-source Flutter application to track your progress through YouTube educational playlists and courses. 
 
-<img src=".github/assets/playlist_screen.png" width="400"/>
+<img src=".github/assets/playlist_screen.jpg" width="400"/>
 
 </div>
 
@@ -12,7 +12,7 @@ An open-source Flutter application to track your progress through YouTube educat
 
 Course Tracker is a privacy-first, fully local application that allows you to import YouTube playlists and track your learning progress. Instead of relying on YouTube's watch history which can get cluttered, Course Tracker gives you a dedicated space to manage your educational content.
 
-<img src=".github/assets/progress_screen.png" width="400"/>
+<img src=".github/assets/progress_screen.jpg" width="400"/>
 
 ## Features
 
