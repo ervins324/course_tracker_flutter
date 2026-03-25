@@ -62,6 +62,27 @@ flutter run
 ### Setting up the API Key
 When you first launch the app, click the 🔑 (key) icon in the top right corner and paste your YouTube Data API v3 key to enable playlist importing.
 
+### Where get YouTube Data API v3 key?
+1. Create a Project:
+     - Go to the [Google Cloud Console](https://console.cloud.google.com)
+
+    - Click the project dropdown (top left) and select New Project. Give it a name and click Create
+
+2. Enable the API:
+    - In the top search bar, type "YouTube Data API v3" and select it from the results
+    - Click the blue Enable button
+
+3. Create Credentials:
+    - Once enabled, click the Credentials tab on the left-hand sidebar (or search for "Credentials" in the top bar)
+    - Click + Create Credentials at the top and select API key
+    A dialog will appear with your new API key. Copy this key
+
+4. Restrict Your Key (Recommended):
+    - To prevent unauthorized use, click Edit API key in the confirmation dialog
+    - Under API restrictions, select Restrict key
+    - Choose YouTube Data API v3 from the dropdown and save your changes
+5. Paste the copied key into app
+
 <br />
 
 ---
