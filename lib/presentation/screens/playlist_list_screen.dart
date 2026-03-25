@@ -65,12 +65,22 @@ class PlaylistListScreen extends ConsumerWidget {
                   Text('No courses yet',
                       style: theme.textTheme.headlineSmall),
                   const SizedBox(height: 8),
-                  const Text('Import a YouTube playlist to get started'),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'To work correctly, the app needs a YouTube Data API Key.\n\n1. Set your API Key\n2. Import a YouTube playlist',
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () => _showImportDialog(context, ref),
                     icon: const Icon(Icons.add),
                     label: const Text('Import Playlist'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => _showApiKeyDialog(context),
+                    icon: const Icon(Icons.key),
+                    label: const Text('Set API Key'),
                   ),
                 ],
               ),
@@ -110,7 +120,7 @@ class PlaylistListScreen extends ConsumerWidget {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Import Playlist'),
         content: TextField(
           controller: controller,
@@ -121,7 +131,7 @@ class PlaylistListScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -138,7 +148,7 @@ class PlaylistListScreen extends ConsumerWidget {
                   }
                 }
 
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 try {
                   await ref
                       .read(playlistListProvider.notifier)
