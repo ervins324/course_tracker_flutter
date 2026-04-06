@@ -151,6 +151,11 @@ class PlaylistProgressNotifier
         playlistId: playlistId);
     await _loadProgress();
   }
+
+  Future<void> setAllWatched(bool isWatched) async {
+    await repository.setAllVideosWatched(playlistId, isWatched);
+    await _loadProgress();
+  }
 }
 
 // Legacy provider kept for backward compatibility

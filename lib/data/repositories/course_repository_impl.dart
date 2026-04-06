@@ -74,4 +74,8 @@ class CourseRepositoryImpl implements CourseRepository {
       {String playlistId = ''}) async {
     await storageService.updateVideoWatchStatus(playlistId, videoId, isWatched);
   }
+
+  Future<void> setAllVideosWatched(String playlistId, bool isWatched) async {
+    await storageService.setAllVideosWatched(playlistId, isWatched);
+  }
 }

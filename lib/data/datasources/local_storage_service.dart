@@ -169,4 +169,25 @@ class LocalStorageService {
       }
     }
   }
+
+  Future<void> setAllVideosWatched(String playlistId, bool isWatched) async {
+    if (!_initialized) await init();
+
+    if (kIsWeb || _videosBox == null) {
+      for (var entry in _memoryVideos.entries.toList()) {
+        if (entry.key.startsWith('${playlistId}_')) {
+          _memoryVideos[entry.key] = entry.value.copyWith(isWatched: isWatched);
+        }
+      }
+    } else {
+      for (var key in _videosBox!.keys) {
+        if ((key as String).startsWith('${playlistId}_')) {
+          final video = _videosBox!.get(key);
+          if (video != null) {
+            await _videosBox!.put(key, video.copyWith(isWatched: isWatched));
+          }
+        }
+      }
+    }
+  }
 }

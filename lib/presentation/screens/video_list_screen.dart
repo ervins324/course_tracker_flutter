@@ -23,6 +23,22 @@ class VideoListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(playlistTitle.isNotEmpty ? playlistTitle : 'Course Videos'),
         actions: [
+          // Mark all watched / unwatched toggle button
+          progressAsync.whenOrNull(
+            data: (progress) {
+              if (progress == null) return const SizedBox.shrink();
+              final allWatched = progress.watchedVideos == progress.totalVideos;
+              return IconButton(
+                icon: Icon(allWatched ? Icons.remove_done : Icons.done_all),
+                tooltip: allWatched ? 'Mark all unwatched' : 'Mark all watched',
+                onPressed: () {
+                  ref
+                      .read(playlistProgressProvider(playlistId).notifier)
+                      .setAllWatched(!allWatched);
+                },
+              );
+            },
+          ) ?? const SizedBox.shrink(),
           IconButton(
             icon: const Icon(Icons.bar_chart),
             tooltip: 'View Progress',

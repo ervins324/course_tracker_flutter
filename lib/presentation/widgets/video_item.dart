@@ -7,86 +7,120 @@ import '../../domain/entities/video.dart';
 import '../../core/utils/duration_parser.dart';
 import '../providers/course_providers.dart';
 
-class VideoItem extends ConsumerWidget {
+class VideoItem extends ConsumerStatefulWidget {
   final Video video;
   final String playlistId;
 
   const VideoItem({super.key, required this.video, required this.playlistId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+  ConsumerState<VideoItem> createState() => _VideoItemState();
+}
 
-    return Dismissible(
-      key: Key('${playlistId}_${video.videoId}'),
-      background: Container(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
-        color: Colors.green.withValues(alpha: 0.8),
-        child: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text('Mark Watched', style: TextStyle(color: Colors.white)),
-          ],
-        ),
-      ),
-      secondaryBackground: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: Colors.orange.withValues(alpha: 0.8),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text('Mark Unwatched', style: TextStyle(color: Colors.white)),
-            SizedBox(width: 8),
-            Icon(Icons.remove_circle_outline, color: Colors.white),
-          ],
-        ),
-      ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.startToEnd) {
-          // Swipe right -> mark watched
-          ref
-              .read(playlistProgressProvider(playlistId).notifier)
-              .toggleVideo(video.videoId, true);
-        } else {
-          // Swipe left -> mark unwatched
-          ref
-              .read(playlistProgressProvider(playlistId).notifier)
-              .toggleVideo(video.videoId, false);
-        }
-        return false; // Don't actually dismiss
+class _VideoItemState extends ConsumerState<VideoItem> {
+  double? _dragStartX;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final video = widget.video;
+    final playlistId = widget.playlistId;
+    final screenWidth = MediaQuery.of(context).size.width;
+    const edgeThreshold = 40.0;
+
+    return Listener(
+      onPointerDown: (event) {
+        _dragStartX = event.position.dx;
       },
-      child: ListTile(
-        onTap: () => _openInYouTube(video.videoId),
-        leading: video.thumbnailUrl.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: video.thumbnailUrl,
-                width: 80,
-                height: 45,
-                memCacheWidth: 240,
-                memCacheHeight: 135,
-                imageBuilder: (context, imageProvider) => Container(
+      child: Dismissible(
+        key: Key('${playlistId}_${video.videoId}'),
+        dismissThresholds: const {
+          DismissDirection.startToEnd: 0.3,
+          DismissDirection.endToStart: 0.3,
+        },
+        background: Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 20),
+          color: Colors.green.withValues(alpha: 0.8),
+          child: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Mark Watched', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+        secondaryBackground: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          color: Colors.orange.withValues(alpha: 0.8),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('Mark Unwatched', style: TextStyle(color: Colors.white)),
+              SizedBox(width: 8),
+              Icon(Icons.remove_circle_outline, color: Colors.white),
+            ],
+          ),
+        ),
+        confirmDismiss: (direction) async {
+          // Ignore swipes that started near the screen edge (back gesture area)
+          if (_dragStartX != null &&
+              (_dragStartX! < edgeThreshold ||
+                  _dragStartX! > screenWidth - edgeThreshold)) {
+            return false;
+          }
+
+          if (direction == DismissDirection.startToEnd) {
+            ref
+                .read(playlistProgressProvider(playlistId).notifier)
+                .toggleVideo(video.videoId, true);
+          } else {
+            ref
+                .read(playlistProgressProvider(playlistId).notifier)
+                .toggleVideo(video.videoId, false);
+          }
+          return false; // Don't actually dismiss
+        },
+        child: ListTile(
+          onTap: () => _openInYouTube(video.videoId),
+          leading: video.thumbnailUrl.isNotEmpty
+              ? CachedNetworkImage(
+                  imageUrl: video.thumbnailUrl,
                   width: 80,
                   height: 45,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    image: DecorationImage(
-                      image: imageProvider,
-                      fit: BoxFit.cover,
+                  memCacheWidth: 240,
+                  memCacheHeight: 135,
+                  imageBuilder: (context, imageProvider) => Container(
+                    width: 80,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      image: DecorationImage(
+                        image: imageProvider,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                ),
-                placeholder: (context, url) => Container(
-                  width: 80,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(6),
+                  placeholder: (context, url) => Container(
+                    width: 80,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
-                ),
-                errorWidget: (context, url, error) => Container(
+                  errorWidget: (context, url, error) => Container(
+                    width: 80,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(Icons.play_circle_outline, size: 28),
+                  ),
+                )
+              : Container(
                   width: 80,
                   height: 45,
                   decoration: BoxDecoration(
@@ -95,37 +129,28 @@ class VideoItem extends ConsumerWidget {
                   ),
                   child: const Icon(Icons.play_circle_outline, size: 28),
                 ),
-              )
-            : Container(
-                width: 80,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(Icons.play_circle_outline, size: 28),
-              ),
-        title: Text(
-          video.title,
-          style: TextStyle(
-            decoration: video.isWatched
-                ? TextDecoration.lineThrough
-                : null,
-            color: video.isWatched
-                ? theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.5)
-                : null,
+          title: Text(
+            video.title,
+            style: TextStyle(
+              decoration: video.isWatched
+                  ? TextDecoration.lineThrough
+                  : null,
+              color: video.isWatched
+                  ? theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.5)
+                  : null,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(DurationParser.formatDuration(video.duration)),
-        trailing: Checkbox(
-          value: video.isWatched,
-          onChanged: (value) {
-            ref
-                .read(playlistProgressProvider(playlistId).notifier)
-                .toggleVideo(video.videoId, value ?? false);
-          },
+          subtitle: Text(DurationParser.formatDuration(video.duration)),
+          trailing: Checkbox(
+            value: video.isWatched,
+            onChanged: (value) {
+              ref
+                  .read(playlistProgressProvider(playlistId).notifier)
+                  .toggleVideo(video.videoId, value ?? false);
+            },
+          ),
         ),
       ),
     );

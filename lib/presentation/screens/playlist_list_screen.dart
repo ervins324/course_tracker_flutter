@@ -121,12 +121,18 @@ class PlaylistListScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Import Playlist'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'YouTube Playlist ID or URL',
-            hintText: 'PL... or https://youtube.com/playlist?list=PL...',
+        title: const Text('Import Playlists'),
+        content: SingleChildScrollView(
+          child: TextField(
+            controller: controller,
+            maxLines: null,
+            minLines: 3,
+            keyboardType: TextInputType.multiline,
+            decoration: const InputDecoration(
+              labelText: 'YouTube Playlist IDs or URLs',
+              hintText: 'One per line:\nPLxxxxx\nhttps://youtube.com/playlist?list=PLyyyyy',
+              border: OutlineInputBorder(),
+            ),
           ),
         ),
         actions: [
@@ -136,35 +142,62 @@ class PlaylistListScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (controller.text.isNotEmpty) {
-                final input = controller.text.trim();
-                String playlistId = input;
-                
-                // Try to extract ID if it's a URL
-                if (input.contains('youtube.com') || input.contains('youtu.be')) {
-                  final uri = Uri.tryParse(input);
+              if (controller.text.trim().isEmpty) return;
+
+              // Split input by newlines, trim each, remove empty lines
+              final lines = controller.text
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .where((l) => l.isNotEmpty)
+                  .toList();
+
+              // Extract playlist IDs from each line
+              final playlistIds = lines.map((line) {
+                if (line.contains('youtube.com') || line.contains('youtu.be')) {
+                  final uri = Uri.tryParse(line);
                   if (uri != null && uri.queryParameters.containsKey('list')) {
-                    playlistId = uri.queryParameters['list']!;
+                    return uri.queryParameters['list']!;
                   }
                 }
+                return line;
+              }).toList();
 
-                Navigator.pop(dialogContext);
+              Navigator.pop(dialogContext);
+
+              final failures = <String>[];
+              for (final id in playlistIds) {
                 try {
                   await ref
                       .read(playlistListProvider.notifier)
-                      .importPlaylist(playlistId);
+                      .importPlaylist(id);
                 } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Import failed: $e'),
-                        action: SnackBarAction(
-                          label: 'Retry',
-                          onPressed: () => _showImportDialog(context, ref),
-                        ),
+                  failures.add('$id: $e');
+                }
+              }
+
+              if (context.mounted) {
+                final successCount = playlistIds.length - failures.length;
+                if (failures.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(successCount == 1
+                          ? 'Playlist imported successfully'
+                          : '$successCount playlists imported successfully'),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '$successCount imported, ${failures.length} failed:\n${failures.join('\n')}',
                       ),
-                    );
-                  }
+                      duration: const Duration(seconds: 5),
+                      action: SnackBarAction(
+                        label: 'Retry',
+                        onPressed: () => _showImportDialog(context, ref),
+                      ),
+                    ),
+                  );
                 }
               }
             },
@@ -229,6 +262,7 @@ class PlaylistListScreen extends ConsumerWidget {
             onPressed: () async {
               if (controller.text.isNotEmpty) {
                 await ApiConstants.saveApiKey(controller.text.trim());
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
